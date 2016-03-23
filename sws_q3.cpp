@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include "utility.h"
 #include "inet_socket.h"
-
 #define BUF_SIZE 300
 
 int main()
@@ -40,9 +39,12 @@ int main()
 				errExit("opening file failed");
 			}
 			numRead = read(fd,buf,300);
+			char headers[] = "HTTP/1.x 200 OK\nContent-Type: text/html; charset=UTF-8\n\n";
+			ssize_t nbBytes = sizeof(headers) / sizeof(char);
 			if(numRead == -1){
 				errExit("reading file failed");
 			}
+			write(client_fd,headers,nbBytes);
 			write(client_fd,buf,numRead);
 			close(client_fd);
 			printf("Closed connection... \n");
