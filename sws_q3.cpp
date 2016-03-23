@@ -10,42 +10,36 @@
 
 int main()
 {
-    int listen_fd = inetListen("8080", 5, NULL);
-    if (listen_fd == -1){
-        errExit("inetListen");
-    }
-	
+	int listen_fd = inetListen("8080", 5, NULL);
+
+	if (listen_fd == -1)
+		errExit("inetListen");
+
 	// Turn on non-blocking mode on the passive socket
-    int flags = fcntl(listen_fd, F_GETFL);
-    if (fcntl(listen_fd, F_SETFL, flags|O_NONBLOCK) == -1){
-        errExit("listen fd non block");
-	}
-	
-	for(;;){
-		int client_fd = accept(listen_fd,NULL,NULL);
-		if(client_fd == -1 && errno != EWOULDBLOCK){
+	int flags = fcntl(listen_fd, F_GETFL);
+	if (fcntl(listen_fd, F_SETFL, flags | O_NONBLOCK) == -1)
+		errExit("listen fd non block");
+
+	for (;; ) {
+		int client_fd = accept(listen_fd, NULL, NULL);
+		if (client_fd == -1 && errno != EWOULDBLOCK)
 			errExit("accept");
-		}
-		if(client_fd != -1){
+		if (client_fd != -1) {
 			char buf[BUF_SIZE];
 			printf("Accept a new connection... \n");
 			int numRead = read(client_fd, buf, BUF_SIZE);
-			if(write(STDOUT_FILENO,buf,numRead) != numRead)
-			{
+			if (write(STDOUT_FILENO, buf, numRead) != numRead)
 				errExit("partial/failed write");
-			}
-			int fd = open("index.html",O_RDONLY);
-			if(fd < 0){
+			int fd = open("./index.html", O_RDONLY);
+			if (fd < 0)
 				errExit("opening file failed");
-			}
-			numRead = read(fd,buf,300);
-			char headers[] = "HTTP/1.x 200 OK\nContent-Type: text/html; charset=UTF-8\n\n";
-			ssize_t nbBytes = sizeof(headers) / sizeof(char);
-			if(numRead == -1){
+			numRead = read(fd, buf, 300);
+			char headers[BUF_SIZE];
+			ssize_t nbBytes = snprintf(headers, BUF_SIZE, "HTTP/1.x 200 OK\r\nContent-Type: text/html;\r\nContent-Length: %i\r\ncharset=UTF-8\r\n\r\n", numRead);
+			if (numRead == -1)
 				errExit("reading file failed");
-			}
-			write(client_fd,headers,nbBytes);
-			write(client_fd,buf,numRead);
+			write(client_fd, headers, nbBytes);
+			write(client_fd, buf, numRead);
 			close(client_fd);
 			printf("Closed connection... \n");
 		}
