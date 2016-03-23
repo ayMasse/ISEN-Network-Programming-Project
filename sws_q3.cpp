@@ -39,8 +39,8 @@ int main()
 			if(fd < 0){
 				errExit("opening file failed");
 			}
-			numRead = read(fd,buf,50);
-			if(numRead != 0){
+			numRead = read(fd,buf,300);
+			if(numRead == -1){
 				errExit("reading file failed");
 			}
 			write(client_fd,buf,numRead);
