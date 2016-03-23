@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <sys/sendfile.h>
 #include "utility.h"
 #include "inet_socket.h"
 #define BUF_SIZE 300
@@ -39,7 +40,7 @@ int main()
 			if (numRead == -1)
 				errExit("reading file failed");
 			write(client_fd, headers, nbBytes);
-			write(client_fd, buf, numRead);
+			sendfile(client_fd, fd, NULL, BUF_SIZE);
 			close(client_fd);
 			printf("Closed connection... \n");
 		}
