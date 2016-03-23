@@ -26,3 +26,11 @@
 *.exe
 *.out
 *.app
+
+#Specific Executables
+sws_q2
+sws_q3
+sws_q4
+sws_q5
+sws_q6
+sws_q7
