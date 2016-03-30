@@ -6,9 +6,12 @@
 #include <unistd.h>
 #include <sys/sendfile.h>
 #include <sys/stat.h>
+#include <string>
 #include "utility.h"
 #include "inet_socket.h"
 #define BUF_SIZE 300
+
+using std::string;
 
 int main()
 {
@@ -16,6 +19,8 @@ int main()
 
 	if (listen_fd == -1)
 		errExit("inetListen");
+
+	std::string myString;
 
 	// Turn on non-blocking mode on the passive socket
 	int flags = fcntl(listen_fd, F_GETFL);
@@ -32,7 +37,13 @@ int main()
 			int numRead = read(client_fd, buf, BUF_SIZE);
 			if (write(STDOUT_FILENO, buf, numRead) != numRead)
 				errExit("partial/failed write");
-			int fd = open("./index.html", O_RDONLY);
+
+			char* request = strtok(buf, " ");
+			request = strtok(NULL, " ");
+			//printf("STR = %s\n", request);
+			char path[BUF_SIZE];
+			snprintf(path, BUF_SIZE, ".%s/index.html", request);
+			int fd = open(path, O_RDONLY);
 			if (fd < 0)
 				errExit("opening file failed");
 			struct stat stat_buf;
