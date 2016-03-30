@@ -42,7 +42,14 @@ int main()
 			request = strtok(NULL, " ");
 			//printf("STR = %s\n", request);
 			char path[BUF_SIZE];
-			snprintf(path, BUF_SIZE, ".%s/index.html", request);
+			snprintf(path, BUF_SIZE, ".%s", request);
+			struct stat sb;
+			if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
+				char path2[BUF_SIZE];
+				strcpy(path2, path);
+				snprintf(path, BUF_SIZE, "%s/index.html", path2);
+				printf("PATH = %s\n", path);
+			}
 			int fd = open(path, O_RDONLY);
 			if (fd < 0)
 				errExit("opening file failed");
