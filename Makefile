@@ -6,6 +6,9 @@ RM=rm -f
 SRCS=inet_socket.cpp utility.cpp
 OBJS=inet_socket.o utility.o
 
+q6: $(OBJS)
+	$(CXX) $(CPPFLAGS) $(OBJS) -o sws_q6 sws_q6.cpp
+
 q5: $(OBJS)
 	$(CXX) $(CPPFLAGS) $(OBJS) -o sws_q5 sws_q5.cpp
 
