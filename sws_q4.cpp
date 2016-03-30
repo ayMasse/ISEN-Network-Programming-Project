@@ -38,7 +38,7 @@ int main()
 			if (write(STDOUT_FILENO, buf, numRead) != numRead)
 				errExit("partial/failed write");
 
-			char* request = strtok(buf, " ");
+			char *request = strtok(buf, " ");
 			request = strtok(NULL, " ");
 			//printf("STR = %s\n", request);
 			char path[BUF_SIZE];

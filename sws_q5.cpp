@@ -20,8 +20,6 @@ int main()
 	if (listen_fd == -1)
 		errExit("inetListen");
 
-	std::string myString;
-
 	// Turn on non-blocking mode on the passive socket
 	int flags = fcntl(listen_fd, F_GETFL);
 	if (fcntl(listen_fd, F_SETFL, flags | O_NONBLOCK) == -1)
@@ -38,18 +36,24 @@ int main()
 			if (write(STDOUT_FILENO, buf, numRead) != numRead)
 				errExit("partial/failed write");
 
-			char* request = strtok(buf, " ");
+			char *request = strtok(buf, " ");
 			request = strtok(NULL, " ");
 			//printf("STR = %s\n", request);
 			char path[BUF_SIZE];
-			snprintf(path, BUF_SIZE, ".%s/index.html", request);
+			snprintf(path, BUF_SIZE, ".%s", request);
+			struct stat sb;
+			if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
+				char path2[BUF_SIZE];
+				strcpy(path2, path);
+				snprintf(path, BUF_SIZE, "%s/index.html", path2);
+				printf("PATH = %s\n", path);
+			}
 			int fd = open(path, O_RDONLY);
 			if (fd < 0) {
 				char headers[BUF_SIZE];
 				ssize_t nbBytes = snprintf(headers, BUF_SIZE, "HTTP/1.x 404 NOT FOUND\r\n\r\n", BUF_SIZE);
 				write(client_fd, headers, nbBytes);
-			}
-			else {
+			} else {
 				struct stat stat_buf;
 				fstat(fd, &stat_buf);
 				char headers[BUF_SIZE];
