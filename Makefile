@@ -24,7 +24,7 @@ q2: $(OBJS)
 object: $(SRCS)
 	$(CXX) $(CPPFLAGS) -c $(SRCS)
 
-clean: 
+clean:
 	$(RM) $(OBJS)
 
 dist-clean: clean
