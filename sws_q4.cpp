@@ -37,11 +37,8 @@ int main()
 				errExit("opening file failed");
 			struct stat stat_buf;
 			fstat(fd, &stat_buf);
-			numRead = read(fd, buf, 300);
 			char headers[BUF_SIZE];
-			ssize_t nbBytes = snprintf(headers, BUF_SIZE, "HTTP/1.x 200 OK\r\nContent-Type: text/html;\r\nContent-Length: %i\r\ncharset=UTF-8\r\n\r\n", numRead);
-			if (numRead == -1)
-				errExit("reading file failed");
+			ssize_t nbBytes = snprintf(headers, BUF_SIZE, "HTTP/1.x 200 OK\r\nContent-Type: text/html;\r\nContent-Length: %i\r\ncharset=UTF-8\r\n\r\n", stat_buf.st_size);
 			write(client_fd, headers, nbBytes);
 			sendfile(client_fd, fd, 0, stat_buf.st_size);
 			close(client_fd);
