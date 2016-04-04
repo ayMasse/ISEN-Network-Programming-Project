@@ -6,34 +6,34 @@
 #include <unistd.h>
 #include <sys/sendfile.h>
 #include <sys/stat.h>
-#include <string>
+#include <sys/epoll.h>
 #include "utility.h"
 #include "inet_socket.h"
-#include <sys/epoll.h>
+
 #define BUF_SIZE 300
+#define LISTEN_PORT "8080"
+#define BACKLOG 5
 #define EPOLL_SIZE 10
 #define MAX_EVENTS 10
 
 
-using std::string;
-
 int main()
 {
-	int listen_fd = inetListen("8080", 5, NULL);
+	int listen_fd = inetListen(LISTEN_PORT, BACKLOG, NULL);
 
 	if (listen_fd == -1)
 		errExit("inetListen");
 
-	std::string myString;
-
 	// Turn on non-blocking mode on the passive socket
 	int flags = fcntl(listen_fd, F_GETFL);
+
 	if (fcntl(listen_fd, F_SETFL, flags | O_NONBLOCK) == -1)
 		errExit("listen fd non block");
 
 	// Initialize the epoll instance
 	int epfd;
 	epfd = epoll_create(EPOLL_SIZE);
+
 	if (epfd == -1)
 		errExit("epoll_create");
 
@@ -42,6 +42,7 @@ int main()
 
 	// add listen_fd to the interest list
 	ev.data.fd = listen_fd;
+
 	if (epoll_ctl(epfd, EPOLL_CTL_ADD, listen_fd, &ev) == -1)
 		errExit("epoll_ctl");
 
@@ -50,50 +51,60 @@ int main()
 
 	for (;; ) {
 		int nb_fd_ready = epoll_wait(epfd, evlist, MAX_EVENTS, 0);
+
 		if (nb_fd_ready == -1) {
 			if (errno == EINTR) // restart if interrupted by signal
 				continue;
 			else
 				errExit("epoll");
 		}
+
 		for (int i = 0; i < nb_fd_ready; ++i) {
 			int fd_ready = evlist[i].data.fd;
+
 			if (fd_ready == listen_fd) {
 				int client_fd = accept(listen_fd, NULL, NULL);
 				printf("Accept a new connection... \n");
 				flags = fcntl(client_fd, F_GETFL);
+
 				if (fcntl(client_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
 					close(client_fd);
 					printf("Closed connection...\n");
 				} else {
 					ev.data.fd = client_fd;
+
 					if (epoll_ctl(epfd, EPOLL_CTL_ADD, client_fd, &ev) == -1) {
 						close(client_fd);
 						printf("Closed connection...\n");
 					}
 				}
-			}
-			else{
+			} else {
 				char buf[BUF_SIZE];
 				int numRead = read(fd_ready, buf, BUF_SIZE);
-				if(numRead == 0){
+
+				if (numRead == 0) {
 					close(fd_ready);
 					printf("Closed connection...\n");
 				}
+
 				if (write(STDOUT_FILENO, buf, numRead) != numRead)
 					errExit("partial/failed write");
+
 				char *request = strtok(buf, " ");
 				request = strtok(NULL, " ");
 				char path[BUF_SIZE];
 				snprintf(path, BUF_SIZE, ".%s", request);
 				struct stat sb;
+
 				if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
 					char path2[BUF_SIZE];
 					strcpy(path2, path);
 					snprintf(path, BUF_SIZE, "%sindex.html", path2);
 					printf("PATH = %s\n", path);
 				}
+
 				int fd = open(path, O_RDONLY);
+
 				if (fd < 0) {
 					char headers[BUF_SIZE];
 					ssize_t nbBytes = snprintf(headers, BUF_SIZE, "HTTP/1.x 404 NOT FOUND\r\nConnection: keep-alive\r\n\r\n");
