@@ -8,24 +8,24 @@
 
 void errExit(const char *format, ...)
 {
-    va_list argList;
-    va_start(argList, format);
-    vfprintf(stderr, format, argList);
-    fprintf(stderr, " [ %s ] \n", strerror(errno));
-    va_end(argList);
+	va_list argList;
 
-    exit(EXIT_FAILURE);
+	va_start(argList, format);
+	vfprintf(stderr, format, argList);
+	fprintf(stderr, " [ %s ] \n", strerror(errno));
+	va_end(argList);
+
+	exit(EXIT_FAILURE);
 }
 
 /* Print an error message (without an 'errno' diagnostic) */
 void fatal(const char *format, ...)
 {
-    va_list argList;
+	va_list argList;
 
-    va_start(argList, format);
-    vfprintf(stderr, format, argList);
-    va_end(argList);
+	va_start(argList, format);
+	vfprintf(stderr, format, argList);
+	va_end(argList);
 
-    exit(EXIT_FAILURE);
+	exit(EXIT_FAILURE);
 }
-

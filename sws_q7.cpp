@@ -7,12 +7,14 @@
 #include <sys/sendfile.h>
 #include <sys/stat.h>
 #include <sys/timerfd.h>
-#include "utility.h"
-#include "inet_socket.h"
 #include <sys/epoll.h>
 #include <signal.h>
 #include <map>
 #include <ctime>
+
+#include "utility.h"
+#include "inet_socket.h"
+
 #define BUF_SIZE 300
 #define LISTEN_PORT "8080"
 #define BACKLOG 5
