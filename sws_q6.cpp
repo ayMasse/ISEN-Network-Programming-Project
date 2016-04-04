@@ -78,6 +78,7 @@ int main()
 				int numRead = read(fd_ready, buf, BUF_SIZE);
 				if(numRead == 0){
 					close(fd_ready);
+					printf("Closed connection...\n");
 				}
 				if (write(STDOUT_FILENO, buf, numRead) != numRead)
 					errExit("partial/failed write");
