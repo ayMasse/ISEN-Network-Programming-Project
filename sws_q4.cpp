@@ -13,14 +13,19 @@
 #define LISTEN_PORT "8080"
 #define BACKLOG 5
 
-int main()
+int main(int argc, char *argv[])
 {
+	if (argc < 2) {
+		errExit("invalid number of arguments");
+		return EXIT_FAILURE;
+	}
+
 	int listen_fd = inetListen(LISTEN_PORT, BACKLOG, NULL);
 
 	if (listen_fd == -1)
 		errExit("inetListen");
 
-	// Turn on non-blocking mode on the passive socket
+// Turn on non-blocking mode on the passive socket
 	int flags = fcntl(listen_fd, F_GETFL);
 	if (fcntl(listen_fd, F_SETFL, flags | O_NONBLOCK) == -1)
 		errExit("listen fd non block");
@@ -42,7 +47,7 @@ int main()
 			char *request = strtok(buf, " ");
 			request = strtok(NULL, " ");
 			char path[BUF_SIZE];
-			snprintf(path, BUF_SIZE, ".%s", request);
+			snprintf(path, BUF_SIZE, "%s%s", argv[1], request);
 			struct stat sb;
 
 			if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {

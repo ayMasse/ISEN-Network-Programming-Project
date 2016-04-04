@@ -21,13 +21,18 @@
 
 using std::map;
 
-int main()
+int main(int argc, char *argv[])
 {
+	if (argc < 2) {
+		errExit("invalid number of arguments");
+		return EXIT_FAILURE;
+	}
+
 	int listen_fd = inetListen(LISTEN_PORT, BACKLOG, NULL);
 	if (listen_fd == -1)
 		errExit("inetListen");
 
-  	signal(SIGPIPE, SIG_IGN);
+	signal(SIGPIPE, SIG_IGN);
 
 	// Turn on non-blocking mode on the passive socket
 	int flags = fcntl(listen_fd, F_GETFL);
@@ -46,7 +51,7 @@ int main()
 	ev.events = EPOLLIN; // event : data can be read
 
 	// add listen_fd to the interest list
-  	ev.data = {};
+	ev.data = {};
 	ev.data.fd = listen_fd;
 
 	if (epoll_ctl(epfd, EPOLL_CTL_ADD, listen_fd, &ev) == -1)
@@ -54,7 +59,7 @@ int main()
 
 	// the event list used with epoll_wait()
 	struct epoll_event evlist[MAX_EVENTS];
-	map<int,int> connections;
+	map<int, int> connections;
 	for (;; ) {
 		int nb_fd_ready = epoll_wait(epfd, evlist, MAX_EVENTS, 0);
 		if (nb_fd_ready == -1) {
@@ -69,13 +74,13 @@ int main()
 			if (fd_ready == listen_fd) {
 				int client_fd = accept(listen_fd, NULL, NULL);
 				printf("Accept a new connection... \n");
-				int timerfd = timerfd_create(CLOCK_REALTIME,0);
+				int timerfd = timerfd_create(CLOCK_REALTIME, 0);
 				if (epoll_ctl(epfd, EPOLL_CTL_ADD, timerfd, &ev) == -1)
 					errExit("epoll_ctl");
 				connections[timerfd] = client_fd;
 				struct itimerspec timerspec = {};
-				timerspec.it_value.tv_sec = 5; 
-				timerfd_settime(timerfd,0,&timerspec,NULL);
+				timerspec.it_value.tv_sec = 5;
+				timerfd_settime(timerfd, 0, &timerspec, NULL);
 				flags = fcntl(client_fd, F_GETFL);
 
 				if (fcntl(client_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
@@ -88,14 +93,12 @@ int main()
 						printf("Closed connection...\n");
 					}
 				}
-			}
-			else if(connections.count(fd_ready) == 1){
+			} else if (connections.count(fd_ready) == 1) {
 				close(connections[fd_ready]);
 				printf("Closed connection because of timeout...\n");
 				if (epoll_ctl(epfd, EPOLL_CTL_DEL, fd_ready, &ev) == -1)
 					errExit("epoll_ctl");
-			}
-			else {
+			} else {
 				char buf[BUF_SIZE];
 				int numRead = read(fd_ready, buf, BUF_SIZE);
 
@@ -110,7 +113,7 @@ int main()
 				char *request = strtok(buf, " ");
 				request = strtok(NULL, " ");
 				char path[BUF_SIZE];
-				snprintf(path, BUF_SIZE, ".%s", request);
+				snprintf(path, BUF_SIZE, "%s%s", argv[1], request);
 				struct stat sb;
 
 				if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
@@ -125,13 +128,13 @@ int main()
 				if (fd < 0) {
 					char headers[BUF_SIZE];
 					ssize_t nbBytes = snprintf(headers, BUF_SIZE, "HTTP/1.x 404 NOT FOUND\r\nConnection: keep-alive\r\n\r\n");
-          write(fd_ready, headers, nbBytes);
+					write(fd_ready, headers, nbBytes);
 				} else {
 					struct stat stat_buf;
 					fstat(fd, &stat_buf);
 					char headers[BUF_SIZE];
 					ssize_t nbBytes = snprintf(headers, BUF_SIZE, "HTTP/1.x 200 OK\r\nContent-Type: text/html;\r\nContent-Length: %i\r\ncharset=UTF-8\r\nConnection: keep-alive\r\n\r\n", stat_buf.st_size);
-          write(fd_ready, headers, nbBytes);
+					write(fd_ready, headers, nbBytes);
 					sendfile(fd_ready, fd, 0, stat_buf.st_size);
 					close(fd);
 				}

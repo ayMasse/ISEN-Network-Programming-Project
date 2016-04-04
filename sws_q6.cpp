@@ -17,8 +17,13 @@
 #define EPOLL_SIZE 10
 #define MAX_EVENTS 10
 
-int main()
+int main(int argc, char *argv[])
 {
+	if (argc < 2) {
+		errExit("invalid number of arguments");
+		return EXIT_FAILURE;
+	}
+
 	int listen_fd = inetListen("8080", 5000, NULL);
 
 	if (listen_fd == -1)
@@ -95,7 +100,7 @@ int main()
 				char *request = strtok(buf, " ");
 				request = strtok(NULL, " ");
 				char path[BUF_SIZE];
-				snprintf(path, BUF_SIZE, ".%s", request);
+				snprintf(path, BUF_SIZE, "%s%s", argv[1], request);
 				struct stat sb;
 
 				// Checks if the path is a file or a directory

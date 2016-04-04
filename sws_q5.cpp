@@ -14,8 +14,13 @@
 #define LISTEN_PORT "8080"
 #define BACKLOG 5
 
-int main()
+int main(int argc, char *argv[])
 {
+	if (argc < 2) {
+		errExit("invalid number of arguments");
+		return EXIT_FAILURE;
+	}
+
 	int listen_fd = inetListen(LISTEN_PORT, BACKLOG, NULL);
 
 	if (listen_fd == -1)
@@ -50,7 +55,7 @@ int main()
 			if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
 				char path2[BUF_SIZE];
 				strcpy(path2, path);
-				snprintf(path, BUF_SIZE, "%sindex.html", path2);
+				snprintf(path, BUF_SIZE, "%s%s", argv[1], request);
 				printf("PATH = %s\n", path);
 			}
 
