@@ -9,6 +9,7 @@
 #include <string>
 #include "utility.h"
 #include "inet_socket.h"
+#include <signal.h>
 #define BUF_SIZE 300
 
 using std::string;
@@ -45,7 +46,7 @@ int main()
 			if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
 				char path2[BUF_SIZE];
 				strcpy(path2, path);
-				snprintf(path, BUF_SIZE, "%s/index.html", path2);
+				snprintf(path, BUF_SIZE, "%sindex.html", path2);
 				printf("PATH = %s\n", path);
 			}
 			int fd = open(path, O_RDONLY);
@@ -60,6 +61,7 @@ int main()
 				ssize_t nbBytes = snprintf(headers, BUF_SIZE, "HTTP/1.x 200 OK\r\nContent-Type: text/html;\r\nContent-Length: %i\r\ncharset=UTF-8\r\n\r\n", stat_buf.st_size);
 				write(client_fd, headers, nbBytes);
 				sendfile(client_fd, fd, 0, stat_buf.st_size);
+				close(fd);
 			}
 			close(client_fd);
 			printf("Closed connection... \n");

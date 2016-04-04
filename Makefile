@@ -1,10 +1,13 @@
 CC=gcc
 CXX=g++
-CPPFLAGS=-std=c++11
+CPPFLAGS=-std=c++11 -g
 RM=rm -f
 
 SRCS=inet_socket.cpp utility.cpp
 OBJS=inet_socket.o utility.o
+
+server: $(OBJS)
+	$(CXX) $(CPPFLAGS) $(OBJS) -o server server.cpp
 
 q7: $(OBJS)
 	$(CXX) $(CPPFLAGS) $(OBJS) -o sws_q7 sws_q7.cpp
