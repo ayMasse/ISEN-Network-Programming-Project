@@ -6,21 +6,19 @@
 #include <unistd.h>
 #include <sys/sendfile.h>
 #include <sys/stat.h>
-#include <string>
 #include "utility.h"
 #include "inet_socket.h"
-#define BUF_SIZE 300
 
-using std::string;
+#define BUF_SIZE 300
+#define LISTEN_PORT "8080"
+#define BACKLOG 5
 
 int main()
 {
-	int listen_fd = inetListen("8080", 5, NULL);
+	int listen_fd = inetListen(LISTEN_PORT, BACKLOG, NULL);
 
 	if (listen_fd == -1)
 		errExit("inetListen");
-
-	std::string myString;
 
 	// Turn on non-blocking mode on the passive socket
 	int flags = fcntl(listen_fd, F_GETFL);
@@ -29,30 +27,36 @@ int main()
 
 	for (;; ) {
 		int client_fd = accept(listen_fd, NULL, NULL);
+
 		if (client_fd == -1 && errno != EWOULDBLOCK)
 			errExit("accept");
+
 		if (client_fd != -1) {
 			char buf[BUF_SIZE];
 			printf("Accept a new connection... \n");
 			int numRead = read(client_fd, buf, BUF_SIZE);
+
 			if (write(STDOUT_FILENO, buf, numRead) != numRead)
 				errExit("partial/failed write");
 
 			char *request = strtok(buf, " ");
 			request = strtok(NULL, " ");
-			//printf("STR = %s\n", request);
 			char path[BUF_SIZE];
 			snprintf(path, BUF_SIZE, ".%s", request);
 			struct stat sb;
+
 			if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
 				char path2[BUF_SIZE];
 				strcpy(path2, path);
 				snprintf(path, BUF_SIZE, "%s/index.html", path2);
 				printf("PATH = %s\n", path);
 			}
+
 			int fd = open(path, O_RDONLY);
+
 			if (fd < 0)
 				errExit("opening file failed");
+
 			struct stat stat_buf;
 			fstat(fd, &stat_buf);
 			char headers[BUF_SIZE];
