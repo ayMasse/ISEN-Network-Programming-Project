@@ -10,21 +10,19 @@
 #include "utility.h"
 #include "inet_socket.h"
 #include <sys/epoll.h>
+#include <signal.h>
 #define BUF_SIZE 300
-#define EPOLL_SIZE 10
-#define MAX_EVENTS 10
-
-
-using std::string;
+#define EPOLL_SIZE 5000
+#define MAX_EVENTS 5000
 
 int main()
 {
-	int listen_fd = inetListen("8080", 5, NULL);
+	int listen_fd = inetListen("8080", 5000, NULL);
 
 	if (listen_fd == -1)
 		errExit("inetListen");
 
-	std::string myString;
+  	signal(SIGPIPE, SIG_IGN);
 
 	// Turn on non-blocking mode on the passive socket
 	int flags = fcntl(listen_fd, F_GETFL);
@@ -41,6 +39,7 @@ int main()
 	ev.events = EPOLLIN; // event : data can be read
 
 	// add listen_fd to the interest list
+  	ev.data = {};
 	ev.data.fd = listen_fd;
 	if (epoll_ctl(epfd, EPOLL_CTL_ADD, listen_fd, &ev) == -1)
 		errExit("epoll_ctl");
@@ -73,7 +72,7 @@ int main()
 					}
 				}
 			}
-			else{
+			else {
 				char buf[BUF_SIZE];
 				int numRead = read(fd_ready, buf, BUF_SIZE);
 				if(numRead == 0){
@@ -97,13 +96,13 @@ int main()
 				if (fd < 0) {
 					char headers[BUF_SIZE];
 					ssize_t nbBytes = snprintf(headers, BUF_SIZE, "HTTP/1.x 404 NOT FOUND\r\nConnection: keep-alive\r\n\r\n");
-					write(fd_ready, headers, nbBytes);
+          write(fd_ready, headers, nbBytes);
 				} else {
 					struct stat stat_buf;
 					fstat(fd, &stat_buf);
 					char headers[BUF_SIZE];
 					ssize_t nbBytes = snprintf(headers, BUF_SIZE, "HTTP/1.x 200 OK\r\nContent-Type: text/html;\r\nContent-Length: %i\r\ncharset=UTF-8\r\nConnection: keep-alive\r\n\r\n", stat_buf.st_size);
-					write(fd_ready, headers, nbBytes);
+          write(fd_ready, headers, nbBytes);
 					sendfile(fd_ready, fd, 0, stat_buf.st_size);
 				}
 			}
