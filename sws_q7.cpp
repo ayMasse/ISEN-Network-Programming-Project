@@ -70,6 +70,8 @@ int main()
 				int client_fd = accept(listen_fd, NULL, NULL);
 				printf("Accept a new connection... \n");
 				int timerfd = timerfd_create(CLOCK_REALTIME,0);
+				if (epoll_ctl(epfd, EPOLL_CTL_ADD, timerfd, &ev) == -1)
+					errExit("epoll_ctl");
 				connections[timerfd] = client_fd;
 				struct itimerspec timerspec = {};
 				timerspec.it_value.tv_sec = 5; 
@@ -90,6 +92,8 @@ int main()
 			else if(connections.count(fd_ready) == 1){
 				close(connections[fd_ready]);
 				printf("Closed connection because of timeout...\n");
+				if (epoll_ctl(epfd, EPOLL_CTL_DEL, fd_ready, &ev) == -1)
+					errExit("epoll_ctl");
 			}
 			else {
 				char buf[BUF_SIZE];
