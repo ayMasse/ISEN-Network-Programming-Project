@@ -17,7 +17,7 @@
 #define MAX_EVENTS 10
 
 
-int main()
+int main(int argc, char *argv[])
 {
 	int listen_fd = inetListen(LISTEN_PORT, BACKLOG, NULL);
 
@@ -96,6 +96,7 @@ int main()
 				snprintf(path, BUF_SIZE, ".%s", request);
 				struct stat sb;
 
+				// Checks if the path is a file or a directory
 				if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
 					char path2[BUF_SIZE];
 					strcpy(path2, path);
