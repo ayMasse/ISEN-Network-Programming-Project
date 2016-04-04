@@ -9,21 +9,22 @@
 #include <sys/epoll.h>
 #include "utility.h"
 #include "inet_socket.h"
-
+#include <sys/epoll.h>
+#include <signal.h>
 #define BUF_SIZE 300
 #define LISTEN_PORT "8080"
 #define BACKLOG 5
 #define EPOLL_SIZE 10
 #define MAX_EVENTS 10
 
-
-int main(int argc, char *argv[])
+int main()
 {
-	int listen_fd = inetListen(LISTEN_PORT, BACKLOG, NULL);
+	int listen_fd = inetListen("8080", 5000, NULL);
 
 	if (listen_fd == -1)
 		errExit("inetListen");
 
+	signal(SIGPIPE, SIG_IGN);
 	// Turn on non-blocking mode on the passive socket
 	int flags = fcntl(listen_fd, F_GETFL);
 
@@ -38,9 +39,10 @@ int main(int argc, char *argv[])
 		errExit("epoll_create");
 
 	struct epoll_event ev;
-	ev.events = EPOLLIN; // event : data can be read
+	ev.events = EPOLLIN;            // event : data can be read
 
 	// add listen_fd to the interest list
+	ev.data = {};
 	ev.data.fd = listen_fd;
 
 	if (epoll_ctl(epfd, EPOLL_CTL_ADD, listen_fd, &ev) == -1)
@@ -53,7 +55,7 @@ int main(int argc, char *argv[])
 		int nb_fd_ready = epoll_wait(epfd, evlist, MAX_EVENTS, 0);
 
 		if (nb_fd_ready == -1) {
-			if (errno == EINTR) // restart if interrupted by signal
+			if (errno == EINTR)         // restart if interrupted by signal
 				continue;
 			else
 				errExit("epoll");
@@ -117,6 +119,7 @@ int main(int argc, char *argv[])
 					ssize_t nbBytes = snprintf(headers, BUF_SIZE, "HTTP/1.x 200 OK\r\nContent-Type: text/html;\r\nContent-Length: %i\r\ncharset=UTF-8\r\nConnection: keep-alive\r\n\r\n", stat_buf.st_size);
 					write(fd_ready, headers, nbBytes);
 					sendfile(fd_ready, fd, 0, stat_buf.st_size);
+					close(fd);
 				}
 			}
 		}

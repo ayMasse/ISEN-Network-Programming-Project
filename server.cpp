@@ -15,9 +15,6 @@
 #define EPOLL_SIZE 5000
 #define MAX_EVENTS 5000
 
-
-using std::string;
-
 int main()
 {
 	int listen_fd = inetListen("8080", 5000, NULL);
@@ -25,9 +22,7 @@ int main()
 	if (listen_fd == -1)
 		errExit("inetListen");
 
-	std::string myString;
-
-  signal(SIGPIPE, SIG_IGN);
+  	signal(SIGPIPE, SIG_IGN);
 
 	// Turn on non-blocking mode on the passive socket
 	int flags = fcntl(listen_fd, F_GETFL);
@@ -44,7 +39,7 @@ int main()
 	ev.events = EPOLLIN; // event : data can be read
 
 	// add listen_fd to the interest list
-  ev.data = {};
+  	ev.data = {};
 	ev.data.fd = listen_fd;
 	if (epoll_ctl(epfd, EPOLL_CTL_ADD, listen_fd, &ev) == -1)
 		errExit("epoll_ctl");
